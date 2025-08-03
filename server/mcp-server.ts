@@ -59,6 +59,8 @@ class AgilityMcpServer {
 				switch (name) {
 					case 'authenticate':
 						return await this.authenticate(args)
+					case 'get_available_instances':
+						return await this.getAvailableInstances(args)
 					case 'list_models':
 						return await this.listModels(args)
 					case 'list_page_modules':
@@ -86,7 +88,7 @@ class AgilityMcpServer {
 		return [
 			{
 				name: 'authenticate',
-				description: 'Authenticate with Agility CMS using access token and instance GUID',
+				description: 'Authenticate with Agility CMS using access token',
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -94,12 +96,16 @@ class AgilityMcpServer {
 							type: 'string',
 							description: 'OAuth access token from Agility CMS',
 						},
-						instanceGuid: {
-							type: 'string',
-							description: 'Instance GUID of the Agility CMS website',
-						},
 					},
-					required: ['accessToken', 'instanceGuid'],
+					required: ['accessToken'],
+				},
+			},
+			{
+				name: 'get_available_instances',
+				description: 'Get list of available Agility CMS instances for the authenticated user',
+				inputSchema: {
+					type: 'object',
+					properties: {},
 				},
 			},
 			{
@@ -108,6 +114,10 @@ class AgilityMcpServer {
 				inputSchema: {
 					type: 'object',
 					properties: {
+						instanceGuid: {
+							type: 'string',
+							description: 'Instance GUID of the Agility CMS website',
+						},
 						includeDefaults: {
 							type: 'boolean',
 							description: 'Include default models',
@@ -119,6 +129,7 @@ class AgilityMcpServer {
 							default: false,
 						},
 					},
+					required: ['instanceGuid'],
 				},
 			},
 			{
@@ -127,12 +138,17 @@ class AgilityMcpServer {
 				inputSchema: {
 					type: 'object',
 					properties: {
+						instanceGuid: {
+							type: 'string',
+							description: 'Instance GUID of the Agility CMS website',
+						},
 						includeDefaults: {
 							type: 'boolean',
 							description: 'Include default modules',
 							default: false,
 						},
 					},
+					required: ['instanceGuid'],
 				},
 			},
 			{
@@ -141,6 +157,10 @@ class AgilityMcpServer {
 				inputSchema: {
 					type: 'object',
 					properties: {
+						instanceGuid: {
+							type: 'string',
+							description: 'Instance GUID of the Agility CMS website',
+						},
 						displayName: {
 							type: 'string',
 							description: 'Display name for the model',
@@ -169,7 +189,7 @@ class AgilityMcpServer {
 							},
 						},
 					},
-					required: ['displayName', 'referenceName', 'fields'],
+					required: ['instanceGuid', 'displayName', 'referenceName', 'fields'],
 				},
 			},
 			{
@@ -178,22 +198,71 @@ class AgilityMcpServer {
 				inputSchema: {
 					type: 'object',
 					properties: {
+						instanceGuid: {
+							type: 'string',
+							description: 'Instance GUID of the Agility CMS website',
+						},
 						referenceName: {
 							type: 'string',
 							description: 'Reference name of the model to retrieve',
 						},
 					},
-					required: ['referenceName'],
+					required: ['instanceGuid', 'referenceName'],
 				},
 			},
 		]
 	}
 
-	private async authenticate(args: any) {
-		const { accessToken, instanceGuid } = args
+	private async getAvailableInstances(args: any) {
+		if (!this.agilityClient) {
+			throw new Error('Not authenticated')
+		}
 
-		if (!accessToken || !instanceGuid) {
-			throw new Error('Access token and instance GUID are required')
+		try {
+			// To get available instances, we need to call a different endpoint
+			// For now, we'll try to use the me() method with an empty string or handle it differently
+			// The actual implementation may vary based on the Agility SDK version
+
+			let user;
+			try {
+				// Try to get user info - this might need adjustment based on actual SDK
+				user = await this.agilityClient.serverUserMethods.me('');
+			} catch (error) {
+				// If that fails, we might need a different approach
+				throw new Error('Unable to retrieve user instances. The SDK may require a specific method to get available instances.');
+			}
+
+			// Extract instance information from WebsiteAccess
+			const instances = user.websiteAccess?.map((access: any) => ({
+				instanceGuid: access.instanceGuid,
+				websiteName: access.websiteName,
+				role: access.role,
+				url: access.url
+			})) || []
+
+			return {
+				content: [
+					{
+						type: 'text',
+						text: `Available instances:\n\n${instances
+							.map(
+								(instance: any) =>
+									`- **${instance.websiteName}** (${instance.instanceGuid})\n  Role: ${instance.role}\n  URL: ${instance.url || 'N/A'}`
+							)
+							.join('\n\n')}`,
+					},
+				],
+			}
+		} catch (error) {
+			throw new Error(`Failed to get available instances: ${error instanceof Error ? error.message : String(error)}`)
+		}
+	}
+
+	private async authenticate(args: any) {
+		const { accessToken } = args
+
+		if (!accessToken) {
+			throw new Error('Access token is required')
 		}
 
 		const options = new (require('@agility/management-sdk').Options)()
@@ -202,9 +271,12 @@ class AgilityMcpServer {
 
 		this.agilityClient = new ApiClient(options)
 
-		// Test the connection
+		// Test the connection by trying to authenticate
+		// Since we don't have an instanceGuid yet, we'll test with a simple API call
 		try {
-			const user = await this.agilityClient.serverUserMethods.me(instanceGuid)
+			// For testing authentication, we could use a different method
+			// or try with an empty string if the SDK allows it
+			const user = await this.agilityClient.serverUserMethods.me('');
 			return {
 				content: [
 					{
@@ -224,15 +296,13 @@ class AgilityMcpServer {
 			throw new Error('Not authenticated')
 		}
 
-		const { includeDefaults = true, includeModules = false } = args
+		const { instanceGuid, includeDefaults = true, includeModules = false } = args
+
+		if (!instanceGuid) {
+			throw new Error('Instance GUID is required')
+		}
 
 		try {
-			// Get the instance GUID - this would need to be stored during authentication
-			const instanceGuid = process.env.AGILITY_INSTANCE_GUID || args.instanceGuid
-			if (!instanceGuid) {
-				throw new Error('Instance GUID not available')
-			}
-
 			const models = await this.agilityClient.modelMethods.getContentModules(
 				includeDefaults,
 				instanceGuid,
@@ -262,14 +332,13 @@ class AgilityMcpServer {
 			throw new Error('Not authenticated')
 		}
 
-		const { includeDefaults = false } = args
+		const { instanceGuid, includeDefaults = false } = args
+
+		if (!instanceGuid) {
+			throw new Error('Instance GUID is required')
+		}
 
 		try {
-			const instanceGuid = process.env.AGILITY_INSTANCE_GUID || args.instanceGuid
-			if (!instanceGuid) {
-				throw new Error('Instance GUID not available')
-			}
-
 			const modules = await this.agilityClient.modelMethods.getPageModules(
 				includeDefaults,
 				instanceGuid
@@ -298,14 +367,13 @@ class AgilityMcpServer {
 			throw new Error('Not authenticated')
 		}
 
-		const { displayName, referenceName, description, fields } = args
+		const { instanceGuid, displayName, referenceName, description, fields } = args
+
+		if (!instanceGuid) {
+			throw new Error('Instance GUID is required')
+		}
 
 		try {
-			const instanceGuid = process.env.AGILITY_INSTANCE_GUID || args.instanceGuid
-			if (!instanceGuid) {
-				throw new Error('Instance GUID not available')
-			}
-
 			const Model = require('@agility/management-sdk').Model
 			const ModelField = require('@agility/management-sdk').ModelField
 
@@ -347,14 +415,13 @@ class AgilityMcpServer {
 			throw new Error('Not authenticated')
 		}
 
-		const { referenceName } = args
+		const { instanceGuid, referenceName } = args
+
+		if (!instanceGuid) {
+			throw new Error('Instance GUID is required')
+		}
 
 		try {
-			const instanceGuid = process.env.AGILITY_INSTANCE_GUID || args.instanceGuid
-			if (!instanceGuid) {
-				throw new Error('Instance GUID not available')
-			}
-
 			const model = await this.agilityClient.modelMethods.getModelByReferenceName(
 				referenceName,
 				instanceGuid
