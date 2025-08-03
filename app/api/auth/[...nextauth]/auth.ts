@@ -1,4 +1,7 @@
-import NextAuth from 'next-auth'
+import { Profile } from '@/lib/types/Profile'
+import NextAuth, { Account, AuthOptions, JWT, User } from 'next-auth'
+import { AdapterUser } from 'next-auth/adapters'
+
 
 declare module 'next-auth' {
 	interface Session {
@@ -14,7 +17,7 @@ declare module 'next-auth' {
 	}
 }
 
-const config = {
+const config: AuthOptions = {
 	providers: [
 		{
 			id: 'agility',
@@ -31,33 +34,31 @@ const config = {
 			userinfo: 'https://mgmt.aglty.io/api/v1/users/me',
 			clientId: process.env.AGILITY_CLIENT_ID,
 			clientSecret: process.env.AGILITY_CLIENT_SECRET,
-			profile(profile: any) {
+			profile(profile: Profile) {
 				return {
 					id: profile.userID?.toString() || '',
 					name: `${profile.firstName} ${profile.lastName}`.trim(),
 					email: profile.emailAddress,
-					image: null,
+					image: `https://mgmt.aglty.io/api/v1/users/Avatar?userId=${profile.userID}`,
 				}
 			},
 		},
 	],
 	callbacks: {
-		async jwt({ token, account, profile }: any) {
+		async jwt({ token, user, account, profile }) {
+			// Store access token and refresh token from OAuth provider during sign in
 			if (account) {
 				token.accessToken = account.access_token
 				token.refreshToken = account.refresh_token
-
-				// Get instance GUID from user profile
-				if (profile && profile.websiteAccess && profile.websiteAccess.length > 0) {
-					token.instanceGuid = profile.websiteAccess[0].guid
-				}
 			}
+
 			return token
 		},
-		async session({ session, token }: any) {
-			session.accessToken = token.accessToken
-			session.refreshToken = token.refreshToken
-			session.instanceGuid = token.instanceGuid
+		async session({ session, token }) {
+			// Send properties to the client
+			session.accessToken = token.accessToken as string
+			session.refreshToken = token.refreshToken as string
+
 			return session
 		},
 	},
