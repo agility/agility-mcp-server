@@ -79,7 +79,7 @@ List all content models in your Agility CMS instance.
 - `includeDefaults` (boolean, optional): Include default models (default: true)
 - `includeModules` (boolean, optional): Include page modules (default: false)
 
-### `list_page_modules`
+### `list_components`
 
 List all page modules in your Agility CMS instance.
 

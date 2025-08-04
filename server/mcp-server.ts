@@ -63,7 +63,7 @@ class AgilityMcpServer {
 						return await this.getAvailableInstances(args)
 					case 'list_models':
 						return await this.listModels(args)
-					case 'list_page_modules':
+					case 'list_components':
 						return await this.listPageModules(args)
 					case 'create_model':
 						return await this.createModel(args)
@@ -133,7 +133,7 @@ class AgilityMcpServer {
 				},
 			},
 			{
-				name: 'list_page_modules',
+				name: 'list_components',
 				description: 'List all page modules in the Agility CMS instance',
 				inputSchema: {
 					type: 'object',
@@ -234,10 +234,8 @@ class AgilityMcpServer {
 
 			// Extract instance information from WebsiteAccess
 			const instances = user.websiteAccess?.map((access: any) => ({
-				instanceGuid: access.instanceGuid,
-				websiteName: access.websiteName,
-				role: access.role,
-				url: access.url
+				guid: access.instanceGuid,
+				name: access.displayName || access.websiteName
 			})) || []
 
 			return {
@@ -247,7 +245,7 @@ class AgilityMcpServer {
 						text: `Available instances:\n\n${instances
 							.map(
 								(instance: any) =>
-									`- **${instance.websiteName}** (${instance.instanceGuid})\n  Role: ${instance.role}\n  URL: ${instance.url || 'N/A'}`
+									`- **${instance.name}** (${instance.guid})`
 							)
 							.join('\n\n')}`,
 					},
