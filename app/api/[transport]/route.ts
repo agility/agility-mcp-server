@@ -132,7 +132,7 @@ const handler = createMcpHandler(
 
 		server.tool(
 			"save_component_model",
-			"Save a new or existing Agility component model.",
+			`Save a new or existing Agility component model.`,
 			{
 				instanceGuid: z.string(),
 				model: ModelSchema,
