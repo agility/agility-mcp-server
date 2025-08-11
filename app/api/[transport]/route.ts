@@ -2,7 +2,7 @@
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
-import { ApiClient, Options, Model, ModelField } from '@agility/management-sdk'
+import { ApiClient, Options, ModelField } from '@agility/management-sdk'
 import { getAvailableInstances } from "@/lib/handlers/available-instances";
 import { getModels } from "@/lib/handlers/get-models";
 import { getComponents } from "@/lib/handlers/get-components";
@@ -45,8 +45,8 @@ const handler = createMcpHandler(
 		);
 
 		server.tool(
-			"get_models",
-			"Get a list of Agility models for a particular instance.",
+			"get_content_models",
+			"Get a list of Agility content models for a particular instance.",
 			{
 				instanceGuid: z.string(),
 			},
@@ -70,7 +70,7 @@ const handler = createMcpHandler(
 		);
 
 		server.tool(
-			"get_components",
+			"get_component_models",
 			"Get a list of Agility components for a particular instance.",
 			{
 				instanceGuid: z.string(),
@@ -93,8 +93,8 @@ const handler = createMcpHandler(
 		);
 
 		server.tool(
-			"save_model",
-			"Save a new or existing Agility model.",
+			"save_content_model",
+			"Save a new or existing Agility content model.",
 			{
 				instanceGuid: z.string(),
 				model: ModelSchema,
@@ -102,11 +102,12 @@ const handler = createMcpHandler(
 			async ({ instanceGuid, model }, extra) => {
 				const token = extra?.authInfo?.token;
 
-				const modelToSave = new Model();
+				const modelToSave: any = {};
 				modelToSave.id = model.id;
 				modelToSave.displayName = model.displayName;
 				modelToSave.referenceName = model.referenceName;
 				modelToSave.description = model.description || null;
+				modelToSave.contentDefinitionTypeID = 1; //Assume this is a LIST
 				modelToSave.fields = model.fields.map((field) => {
 					const newField = new ModelField();
 					newField.name = field.name;
@@ -122,7 +123,45 @@ const handler = createMcpHandler(
 				);
 
 				return {
-					content: [{ type: "text", text: `Model saved successfully: ${updatedModel.displayName} (${updatedModel.referenceName} - ${updatedModel.id})` }],
+					content: [{ type: "text", text: `Content model saved successfully: ${updatedModel.displayName} (${updatedModel.referenceName} - ${updatedModel.id})` }],
+					structuredContent: { model: updatedModel }
+				};
+
+			}
+		);
+
+		server.tool(
+			"save_component_model",
+			"Save a new or existing Agility component model.",
+			{
+				instanceGuid: z.string(),
+				model: ModelSchema,
+			},
+			async ({ instanceGuid, model }, extra) => {
+				const token = extra?.authInfo?.token;
+
+				const modelToSave: any = {};
+				modelToSave.id = model.id;
+				modelToSave.displayName = model.displayName;
+				modelToSave.referenceName = model.referenceName;
+				modelToSave.description = model.description || null;
+				modelToSave.contentDefinitionTypeID = 2; //Assume this is a COMPONENT
+				modelToSave.fields = model.fields.map((field) => {
+					const newField = new ModelField();
+					newField.name = field.name;
+					newField.label = field.label;
+					newField.type = field.type;
+					newField.settings = field.settings || {};
+					return newField;
+				});
+
+
+				const updatedModel = await saveModel(
+					{ token, instanceGuid, model: modelToSave }
+				);
+
+				return {
+					content: [{ type: "text", text: `Component model saved successfully: ${updatedModel.displayName} (${updatedModel.referenceName} - ${updatedModel.id})` }],
 					structuredContent: { model: updatedModel }
 				};
 
@@ -131,6 +170,7 @@ const handler = createMcpHandler(
 	},
 	{
 		// Optional server options
+		instructions: "Use the tools to interact with Agility CMS content models and components.",
 	},
 	{
 		// Optional redis config
@@ -183,3 +223,4 @@ const authHandler = withMcpAuth(handler, verifyToken, {
 });
 
 export { authHandler as GET, authHandler as POST };
+

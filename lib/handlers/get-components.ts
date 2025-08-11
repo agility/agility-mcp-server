@@ -8,9 +8,6 @@ interface Params {
 
 export async function getComponents({ token, instanceGuid }: Params) {
 	const includeDefaults = false
-	const includeModules = false
-
-
 
 	if (!instanceGuid || !token) {
 		throw new Error('instanceGuid and token are required')

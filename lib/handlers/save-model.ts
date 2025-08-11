@@ -1,5 +1,4 @@
 import { ApiClient, Model, ModelField, Options } from "@agility/management-sdk";
-import { NextResponse } from "next/server";
 import { z } from "zod";
 
 export const FieldSchema = z.object({
