@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
 	// Return registration endpoint info
 	return NextResponse.json({
-		registration_endpoint: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/register`,
+		registration_endpoint: `${process.env.BASE_URL || 'http://localhost:3000'}/api/auth/register`,
 		supported_methods: ['POST']
 	})
 }

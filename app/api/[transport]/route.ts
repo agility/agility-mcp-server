@@ -173,7 +173,6 @@ const handler = createMcpHandler(
 		instructions: "Use the tools to interact with Agility CMS content models and components.",
 	},
 	{
-		// Optional redis config
 		basePath: "/api", // this needs to match where the [transport] is located.
 		maxDuration: 60,
 		verboseLogs: true,

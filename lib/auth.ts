@@ -39,7 +39,7 @@ export class AuthService {
 	constructor() {
 		this.clientId = process.env.AGILITY_CLIENT_ID!
 		this.clientSecret = process.env.AGILITY_CLIENT_SECRET!
-		this.redirectUri = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/callback`
+		this.redirectUri = `${process.env.BASE_URL || 'http://localhost:3000'}/api/auth/callback`
 	}
 
 	generateAuthUrl({ state, redirect_uri, scope }: AuthUrlProps): string {

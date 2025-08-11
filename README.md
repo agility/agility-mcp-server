@@ -23,17 +23,7 @@ npm install
 Create a `.env.local` file with:
 
 ```env
-# Agility CMS OAuth Configuration
-AGILITY_CLIENT_ID=your_client_id
-AGILITY_CLIENT_SECRET=your_client_secret
-AGILITY_REDIRECT_URI=http://localhost:3000/api/auth/callback/agility
-
-# NextAuth Configuration
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your_secret_key_here
-
-# MCP Server Configuration
-MCP_SERVER_PORT=3001
+BASE_URL=http://localhost:3000
 ```
 
 ### 3. Get Agility CMS OAuth Credentials
