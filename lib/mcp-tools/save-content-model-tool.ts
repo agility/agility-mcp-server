@@ -1,37 +1,41 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from "zod";
 import { ModelField } from '@agility/management-sdk';
-import { ModelSchema, saveModel } from "@/lib/handlers/save-model";
+import {
+	ModelSchema,
+	EnhancedModelSchema,
+	saveModel,
+	saveModelWithFields,
+	convertFieldsToModelFields,
+	createFieldFromSchema,
+	EnhancedFieldSchema
+} from "@/lib/handlers/save-model";
 
 export function registerSaveContentModelTool(server: McpServer) {
+	// Enhanced tool that accepts both legacy and new field formats
 	server.tool(
 		"save_content_model",
-		"Save a new or existing Agility content model.",
+		"Save a new or existing Agility content model with enhanced field types and validation.",
 		{
 			instanceGuid: z.string(),
-			model: ModelSchema,
+			model: EnhancedModelSchema,
 		},
 		async ({ instanceGuid, model }: { instanceGuid: string, model: any }, extra: any) => {
 			const token = extra?.authInfo?.token;
 
-			const modelToSave: any = {};
-			modelToSave.id = model.id;
-			modelToSave.displayName = model.displayName;
-			modelToSave.referenceName = model.referenceName;
-			modelToSave.description = model.description || null;
-			modelToSave.contentDefinitionTypeID = 1; //Assume this is a LIST
-			modelToSave.fields = model.fields.map((field: any) => {
-				const newField = new ModelField();
-				newField.name = field.name;
-				newField.label = field.label;
-				newField.type = field.type;
-				newField.settings = field.settings || {};
-				return newField;
-			});
+			// Convert enhanced field schema to Field instances
+			const fieldInstances = model.fields.map((fieldData: any) => createFieldFromSchema(fieldData));
 
-			const updatedModel = await saveModel(
-				{ token, instanceGuid, model: modelToSave }
-			);
+			const updatedModel = await saveModelWithFields({
+				token,
+				instanceGuid,
+				id: model.id,
+				displayName: model.displayName,
+				referenceName: model.referenceName,
+				description: model.description,
+				fields: fieldInstances,
+				contentDefinitionTypeID: 1 // Content model
+			});
 
 			return {
 				content: [{ type: "text", text: `Content model saved successfully: ${updatedModel.displayName} (${updatedModel.referenceName} - ${updatedModel.id})` }],
@@ -39,4 +43,5 @@ export function registerSaveContentModelTool(server: McpServer) {
 			};
 		}
 	);
+
 }
