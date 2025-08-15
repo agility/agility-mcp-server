@@ -1,0 +1,655 @@
+import { z } from "zod";
+
+// Base Field class that all specific field types extend
+export abstract class Field {
+	name: string;
+	label: string;
+	description?: string;
+	abstract type: string;
+
+	constructor(name: string, label: string, description?: string) {
+		this.name = name;
+		this.label = label;
+		this.description = description;
+	}
+
+	// Abstract method that each field type must implement to generate their specific settings
+	abstract generateSettings(): Record<string, string>;
+
+	// Convert to the ModelField format expected by the Agility SDK
+	toModelField(): {
+		name: string;
+		label: string;
+		type: string;
+		description?: string;
+		settings: Record<string, string>;
+	} {
+		return {
+			name: this.name,
+			label: this.label,
+			type: this.type,
+			description: this.description,
+			settings: this.generateSettings()
+		};
+	}
+}
+
+// Common base class for fields that can be required and have default values
+export abstract class BaseField extends Field {
+	required?: boolean;
+	unique?: boolean;
+
+	constructor(name: string, label: string, description?: string, required?: boolean, unique?: boolean) {
+		super(name, label, description);
+		this.required = required;
+		this.unique = unique;
+	}
+
+	protected getBaseSettings(): Record<string, string> {
+		const settings: Record<string, string> = {};
+		if (this.required !== undefined) {
+			settings.Required = this.required.toString();
+		}
+		if (this.unique !== undefined) {
+			settings.Unique = this.unique.toString();
+		}
+		return settings;
+	}
+}
+
+// Text-based fields that can have length and default value
+export abstract class TextBasedField extends BaseField {
+	defaultValue?: string;
+	length?: number;
+
+	constructor(
+		name: string,
+		label: string,
+		description?: string,
+		required?: boolean,
+		unique?: boolean,
+		defaultValue?: string,
+		length?: number
+	) {
+		super(name, label, description, required, unique);
+		this.defaultValue = defaultValue;
+		this.length = length;
+	}
+
+	protected getTextSettings(): Record<string, string> {
+		const settings = this.getBaseSettings();
+		if (this.defaultValue !== undefined) {
+			settings.DefaultValue = this.defaultValue;
+		}
+		if (this.length !== undefined) {
+			settings.Length = this.length.toString();
+		}
+		return settings;
+	}
+}
+
+// Specific Field Types
+
+export class TextField extends TextBasedField {
+	type = "Text";
+
+	generateSettings(): Record<string, string> {
+		return this.getTextSettings();
+	}
+}
+
+export class LongTextField extends TextBasedField {
+	type = "LongText";
+
+	generateSettings(): Record<string, string> {
+		return this.getTextSettings();
+	}
+}
+
+export class HtmlField extends TextBasedField {
+	type = "Html";
+
+	generateSettings(): Record<string, string> {
+		return this.getTextSettings();
+	}
+}
+
+export class IntegerField extends BaseField {
+	type = "Integer";
+	defaultValue?: number;
+
+	constructor(
+		name: string,
+		label: string,
+		description?: string,
+		required?: boolean,
+		unique?: boolean,
+		defaultValue?: number
+	) {
+		super(name, label, description, required, unique);
+		this.defaultValue = defaultValue;
+	}
+
+	generateSettings(): Record<string, string> {
+		const settings = this.getBaseSettings();
+		if (this.defaultValue !== undefined) {
+			settings.DefaultValue = this.defaultValue.toString();
+		}
+		return settings;
+	}
+}
+
+export class DecimalField extends BaseField {
+	type = "Decimal";
+	defaultValue?: number;
+
+	constructor(
+		name: string,
+		label: string,
+		description?: string,
+		required?: boolean,
+		unique?: boolean,
+		defaultValue?: number
+	) {
+		super(name, label, description, required, unique);
+		this.defaultValue = defaultValue;
+	}
+
+	generateSettings(): Record<string, string> {
+		const settings = this.getBaseSettings();
+		if (this.defaultValue !== undefined) {
+			settings.DefaultValue = this.defaultValue.toString();
+		}
+		return settings;
+	}
+}
+
+export class BooleanField extends BaseField {
+	type = "Boolean";
+	defaultValue?: boolean;
+
+	constructor(
+		name: string,
+		label: string,
+		description?: string,
+		required?: boolean,
+		defaultValue?: boolean
+	) {
+		super(name, label, description, required);
+		this.defaultValue = defaultValue;
+	}
+
+	generateSettings(): Record<string, string> {
+		const settings = this.getBaseSettings();
+		if (this.defaultValue !== undefined) {
+			settings.DefaultValue = this.defaultValue.toString();
+		}
+		return settings;
+	}
+}
+
+export class DateField extends BaseField {
+	type = "Date";
+	showTime?: boolean;
+
+	constructor(
+		name: string,
+		label: string,
+		description?: string,
+		required?: boolean,
+		showTime?: boolean
+	) {
+		super(name, label, description, required);
+		this.showTime = showTime;
+	}
+
+	generateSettings(): Record<string, string> {
+		const settings = this.getBaseSettings();
+		if (this.showTime !== undefined) {
+			settings.ShowTime = this.showTime.toString();
+		}
+		return settings;
+	}
+}
+
+export interface DropdownChoice {
+	label: string;
+	value: string;
+}
+
+export class DropdownListField extends TextBasedField {
+	type = "DropdownList";
+	choices: DropdownChoice[];
+
+	constructor(
+		name: string,
+		label: string,
+		choices: DropdownChoice[],
+		description?: string,
+		required?: boolean,
+		defaultValue?: string
+	) {
+		super(name, label, description, required, undefined, defaultValue);
+		this.choices = choices;
+	}
+
+	generateSettings(): Record<string, string> {
+		const settings = this.getTextSettings();
+		// Format choices as: Choice 1|value1\nChoice 2|value2\nChoice 3|value3
+		const choicesString = this.choices
+			.map(choice => `${choice.label}|${choice.value}`)
+			.join('\n');
+		settings.Choices = choicesString;
+		return settings;
+	}
+}
+
+export class FileAttachmentField extends BaseField {
+	type = "FileAttachment";
+
+	generateSettings(): Record<string, string> {
+		return this.getBaseSettings();
+	}
+}
+
+export class ImageAttachmentField extends BaseField {
+	type = "ImageAttachment";
+
+	generateSettings(): Record<string, string> {
+		return this.getBaseSettings();
+	}
+}
+
+export class LinkField extends BaseField {
+	type = "Link";
+
+	generateSettings(): Record<string, string> {
+		return this.getBaseSettings();
+	}
+}
+
+export type ContentRenderAs = "dropdown" | "checkbox" | "searchlistbox" | "grid";
+export type SortDirection = "asc" | "desc";
+
+export class ContentField extends BaseField {
+	type = "Content";
+	contentDefinition: string; // referenceName or ID of the Content model to link to
+	contentView?: string; // referenceName of the content list, or '_newcontent_agility_' for new lists
+	renderAs?: ContentRenderAs;
+	linkedContentDropdownTextField?: string; // for RenderAs=dropdown
+	linkedContentDropdownValueField?: string; // for RenderAs=dropdown
+	displayColumnAttributeName?: string; // for RenderAs=dropdown
+	sort?: string; // for RenderAs=grid
+	sortDirection?: SortDirection; // for RenderAs=grid
+	sortIDFieldName?: string; // for RenderAs=grid
+	defaultColumns?: string; // for RenderAs=grid or searchlistbox
+
+	constructor(
+		name: string,
+		label: string,
+		contentDefinition: string,
+		description?: string,
+		required?: boolean,
+		contentView?: string,
+		renderAs?: ContentRenderAs
+	) {
+		super(name, label, description, required);
+		this.contentDefinition = contentDefinition;
+		this.contentView = contentView;
+		this.renderAs = renderAs;
+	}
+
+	// Builder pattern methods for easier configuration
+	withContentView(contentView: string): ContentField {
+		this.contentView = contentView;
+		return this;
+	}
+
+	withRenderAs(renderAs: ContentRenderAs): ContentField {
+		this.renderAs = renderAs;
+		return this;
+	}
+
+	withDropdownSettings(
+		textField: string,
+		valueField: string,
+		displayColumn: string
+	): ContentField {
+		this.linkedContentDropdownTextField = textField;
+		this.linkedContentDropdownValueField = valueField;
+		this.displayColumnAttributeName = displayColumn;
+		return this;
+	}
+
+	withGridSettings(
+		sort: string = "ItemOrder",
+		sortDirection: SortDirection = "asc",
+		defaultColumns?: string,
+		sortIDFieldName?: string
+	): ContentField {
+		this.sort = sort;
+		this.sortDirection = sortDirection;
+		this.defaultColumns = defaultColumns;
+		this.sortIDFieldName = sortIDFieldName;
+		return this;
+	}
+
+	generateSettings(): Record<string, string> {
+		const settings = this.getBaseSettings();
+		settings.ContentDefinition = this.contentDefinition;
+
+		if (this.contentView) {
+			settings.ContentView = this.contentView;
+		}
+
+		if (this.renderAs) {
+			settings.RenderAs = this.renderAs;
+		}
+
+		if (this.linkedContentDropdownTextField) {
+			settings.LinkedContentDropdownTextField = this.linkedContentDropdownTextField;
+		}
+
+		if (this.linkedContentDropdownValueField) {
+			settings.LinkedContentDropdownValueField = this.linkedContentDropdownValueField;
+		}
+
+		if (this.displayColumnAttributeName) {
+			settings.DisplayColumnAttributeName = this.displayColumnAttributeName;
+		}
+
+		if (this.sort) {
+			settings.Sort = this.sort;
+		}
+
+		if (this.sortDirection) {
+			settings.SortDirection = this.sortDirection;
+		}
+
+		if (this.sortIDFieldName) {
+			settings.SortIDFieldName = this.sortIDFieldName;
+		}
+
+		if (this.defaultColumns) {
+			settings.DefaultColumns = this.defaultColumns;
+		}
+
+		return settings;
+	}
+}
+
+// Enhanced Zod schemas for each field type with proper validation
+export const TextFieldSchema = z.object({
+	type: z.literal("Text"),
+	name: z.string().min(2),
+	label: z.string().min(2),
+	description: z.string().optional(),
+	required: z.boolean().optional(),
+	unique: z.boolean().optional(),
+	defaultValue: z.string().optional(),
+	length: z.number().positive().optional()
+});
+
+export const LongTextFieldSchema = z.object({
+	type: z.literal("LongText"),
+	name: z.string().min(2),
+	label: z.string().min(2),
+	description: z.string().optional(),
+	required: z.boolean().optional(),
+	unique: z.boolean().optional(),
+	defaultValue: z.string().optional(),
+	length: z.number().positive().optional()
+});
+
+export const HtmlFieldSchema = z.object({
+	type: z.literal("Html"),
+	name: z.string().min(2),
+	label: z.string().min(2),
+	description: z.string().optional(),
+	required: z.boolean().optional(),
+	unique: z.boolean().optional(),
+	defaultValue: z.string().optional(),
+	length: z.number().positive().optional()
+});
+
+export const IntegerFieldSchema = z.object({
+	type: z.literal("Integer"),
+	name: z.string().min(2),
+	label: z.string().min(2),
+	description: z.string().optional(),
+	required: z.boolean().optional(),
+	unique: z.boolean().optional(),
+	defaultValue: z.number().optional()
+});
+
+export const DecimalFieldSchema = z.object({
+	type: z.literal("Decimal"),
+	name: z.string().min(2),
+	label: z.string().min(2),
+	description: z.string().optional(),
+	required: z.boolean().optional(),
+	unique: z.boolean().optional(),
+	defaultValue: z.number().optional()
+});
+
+export const BooleanFieldSchema = z.object({
+	type: z.literal("Boolean"),
+	name: z.string().min(2),
+	label: z.string().min(2),
+	description: z.string().optional(),
+	required: z.boolean().optional(),
+	defaultValue: z.boolean().optional()
+});
+
+export const DateFieldSchema = z.object({
+	type: z.literal("Date"),
+	name: z.string().min(2),
+	label: z.string().min(2),
+	description: z.string().optional(),
+	required: z.boolean().optional(),
+	showTime: z.boolean().optional()
+});
+
+export const DropdownChoiceSchema = z.object({
+	label: z.string(),
+	value: z.string()
+});
+
+export const DropdownListFieldSchema = z.object({
+	type: z.literal("DropdownList"),
+	name: z.string().min(2),
+	label: z.string().min(2),
+	description: z.string().optional(),
+	required: z.boolean().optional(),
+	defaultValue: z.string().optional(),
+	choices: z.array(DropdownChoiceSchema).min(1)
+});
+
+export const FileAttachmentFieldSchema = z.object({
+	type: z.literal("FileAttachment"),
+	name: z.string().min(2),
+	label: z.string().min(2),
+	description: z.string().optional(),
+	required: z.boolean().optional()
+});
+
+export const ImageAttachmentFieldSchema = z.object({
+	type: z.literal("ImageAttachment"),
+	name: z.string().min(2),
+	label: z.string().min(2),
+	description: z.string().optional(),
+	required: z.boolean().optional()
+});
+
+export const LinkFieldSchema = z.object({
+	type: z.literal("Link"),
+	name: z.string().min(2),
+	label: z.string().min(2),
+	description: z.string().optional(),
+	required: z.boolean().optional()
+});
+
+export const ContentFieldSchema = z.object({
+	type: z.literal("Content"),
+	name: z.string().min(2),
+	label: z.string().min(2),
+	description: z.string().optional(),
+	required: z.boolean().optional(),
+	contentDefinition: z.string().min(1),
+	contentView: z.string().optional(),
+	renderAs: z.enum(["dropdown", "checkbox", "searchlistbox", "grid"]).optional(),
+	linkedContentDropdownTextField: z.string().optional(),
+	linkedContentDropdownValueField: z.string().optional(),
+	displayColumnAttributeName: z.string().optional(),
+	sort: z.string().optional(),
+	sortDirection: z.enum(["asc", "desc"]).optional(),
+	sortIDFieldName: z.string().optional(),
+	defaultColumns: z.string().optional()
+});
+
+// Union type for all field types
+export const EnhancedFieldSchema = z.discriminatedUnion("type", [
+	TextFieldSchema,
+	LongTextFieldSchema,
+	HtmlFieldSchema,
+	IntegerFieldSchema,
+	DecimalFieldSchema,
+	BooleanFieldSchema,
+	DateFieldSchema,
+	DropdownListFieldSchema,
+	FileAttachmentFieldSchema,
+	ImageAttachmentFieldSchema,
+	LinkFieldSchema,
+	ContentFieldSchema
+]);
+
+// Factory function to create field instances from schema data
+export function createFieldFromSchema(fieldData: z.infer<typeof EnhancedFieldSchema>): Field {
+	switch (fieldData.type) {
+		case "Text":
+			return new TextField(
+				fieldData.name,
+				fieldData.label,
+				fieldData.description,
+				fieldData.required,
+				fieldData.unique,
+				fieldData.defaultValue,
+				fieldData.length
+			);
+		case "LongText":
+			return new LongTextField(
+				fieldData.name,
+				fieldData.label,
+				fieldData.description,
+				fieldData.required,
+				fieldData.unique,
+				fieldData.defaultValue,
+				fieldData.length
+			);
+		case "Html":
+			return new HtmlField(
+				fieldData.name,
+				fieldData.label,
+				fieldData.description,
+				fieldData.required,
+				fieldData.unique,
+				fieldData.defaultValue,
+				fieldData.length
+			);
+		case "Integer":
+			return new IntegerField(
+				fieldData.name,
+				fieldData.label,
+				fieldData.description,
+				fieldData.required,
+				fieldData.unique,
+				fieldData.defaultValue
+			);
+		case "Decimal":
+			return new DecimalField(
+				fieldData.name,
+				fieldData.label,
+				fieldData.description,
+				fieldData.required,
+				fieldData.unique,
+				fieldData.defaultValue
+			);
+		case "Boolean":
+			return new BooleanField(
+				fieldData.name,
+				fieldData.label,
+				fieldData.description,
+				fieldData.required,
+				fieldData.defaultValue
+			);
+		case "Date":
+			return new DateField(
+				fieldData.name,
+				fieldData.label,
+				fieldData.description,
+				fieldData.required,
+				fieldData.showTime
+			);
+		case "DropdownList":
+			return new DropdownListField(
+				fieldData.name,
+				fieldData.label,
+				fieldData.choices,
+				fieldData.description,
+				fieldData.required,
+				fieldData.defaultValue
+			);
+		case "FileAttachment":
+			return new FileAttachmentField(
+				fieldData.name,
+				fieldData.label,
+				fieldData.description,
+				fieldData.required
+			);
+		case "ImageAttachment":
+			return new ImageAttachmentField(
+				fieldData.name,
+				fieldData.label,
+				fieldData.description,
+				fieldData.required
+			);
+		case "Link":
+			return new LinkField(
+				fieldData.name,
+				fieldData.label,
+				fieldData.description,
+				fieldData.required
+			);
+		case "Content":
+			const contentField = new ContentField(
+				fieldData.name,
+				fieldData.label,
+				fieldData.contentDefinition,
+				fieldData.description,
+				fieldData.required,
+				fieldData.contentView,
+				fieldData.renderAs
+			);
+
+			if (fieldData.linkedContentDropdownTextField && fieldData.linkedContentDropdownValueField && fieldData.displayColumnAttributeName) {
+				contentField.withDropdownSettings(
+					fieldData.linkedContentDropdownTextField,
+					fieldData.linkedContentDropdownValueField,
+					fieldData.displayColumnAttributeName
+				);
+			}
+
+			if (fieldData.sort) {
+				contentField.withGridSettings(
+					fieldData.sort,
+					fieldData.sortDirection,
+					fieldData.defaultColumns,
+					fieldData.sortIDFieldName
+				);
+			}
+
+			return contentField;
+		default:
+			throw new Error(`Unknown field type: ${(fieldData as any).type}`);
+	}
+}

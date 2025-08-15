@@ -8,9 +8,11 @@ export async function GET(request: NextRequest) {
 	try {
 
 		const redirect_uri = request.nextUrl.searchParams.get('redirect_uri') || `${baseUrl}/api/auth/callback`
-		const scope = request.nextUrl.searchParams.get('scope') || 'offline_access'
+		let scope = request.nextUrl.searchParams.get('scope') || 'offline_access'
 		const state = request.nextUrl.searchParams.get('state') || undefined
-
+		if (scope && !scope.includes('offline_access')) {
+			scope += ' offline_access'
+		}
 		const authUrl = authService.generateAuthUrl({ redirect_uri, scope, state })
 
 		return NextResponse.redirect(authUrl)
