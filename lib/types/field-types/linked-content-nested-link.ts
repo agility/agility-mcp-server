@@ -1,5 +1,5 @@
 import { BaseField } from "./base-field";
-import { NESTED_CONTENT_VIEW } from "./constants";
+import { NESTED_CONTENT_VIEW } from "../constants";
 
 export class LinkedContentNestedLink extends BaseField {
 	type = "Content";

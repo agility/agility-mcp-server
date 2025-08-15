@@ -1,11 +1,21 @@
 import { z } from "zod";
-import { Field } from "./base-field";
-import { TextField, LongTextField, HtmlField } from "./text-fields";
-import { IntegerField, DecimalField } from "./numeric-fields";
-import { BooleanField, DateField } from "./boolean-date-fields";
-import { DropdownListField, FileAttachmentField, ImageAttachmentField, LinkField, type DropdownChoice } from "./special-fields";
-import { ContentField } from "./content-field";
-import { EnhancedFieldSchema } from "./field-schemas";
+import { Field } from "./field-types/base-field";
+import {
+	TextField,
+	LongTextField,
+	HtmlField,
+	IntegerField,
+	DecimalField,
+	BooleanField,
+	DateField,
+	DropdownListField,
+	FileAttachmentField,
+	ImageAttachmentField,
+	LinkField,
+	ContentField,
+	type DropdownChoice
+} from "./field-types";
+import { EnhancedFieldSchema } from "./field-schema";
 
 // Factory function to create field instances from schema data
 export function createFieldFromSchema(fieldData: z.infer<typeof EnhancedFieldSchema>): Field {

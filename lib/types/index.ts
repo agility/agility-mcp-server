@@ -8,33 +8,7 @@ export {
 } from "./constants";
 
 // Base classes
-export { Field, BaseField } from "./base-field";
-
-// Field implementations
-export { TextField, LongTextField, HtmlField } from "./text-fields";
-export { IntegerField, DecimalField } from "./numeric-fields";
-export { BooleanField, DateField } from "./boolean-date-fields";
-export {
-	DropdownListField,
-	FileAttachmentField,
-	ImageAttachmentField,
-	LinkField,
-	type DropdownChoice
-} from "./special-fields";
-export {
-	ContentField,
-	type ContentRenderAs,
-	type SortDirection
-} from "./content-field";
-
-// LinkedContent classes
-export { LinkedContentDropdown } from "./linked-content-dropdown";
-export { LinkedContentCheckboxes } from "./linked-content-checkboxes";
-export { LinkedContentSearchListBox } from "./linked-content-search-listbox";
-export { LinkedContentNestedGrid } from "./linked-content-nested-grid";
-export { LinkedContentNestedLink } from "./linked-content-nested-link";
-export { LinkedContentSharedGrid } from "./linked-content-shared-grid";
-export { LinkedContentSharedLink } from "./linked-content-shared-link";
+export { Field, BaseField } from "./field-types/base-field";
 
 // Schemas
 export {
@@ -52,13 +26,25 @@ export {
 	LinkFieldSchema,
 	ContentFieldSchema,
 	EnhancedFieldSchema
-} from "./field-schemas";
+} from "./field-schema";
 
 // Factory function
 export { createFieldFromSchema } from "./field-factory";
 
-// LinkedContent factory
+// All field types and utilities from the organized field-types folder
+export * from "./field-types";
+
+// Container conversion utilities
 export {
-	createLinkedContent,
-	createLinkedContentField
-} from "./linked-content-factory";
+	ContainerSchema,
+	ContentViewColumnSchema,
+	containerToZodContainer,
+	zodContainerToContainer,
+	containersToZodContainers,
+	zodContainersToContainers
+} from "./zod-container";
+
+export type {
+	ZodContainer,
+	ZodContentViewColumn
+} from "./zod-container";

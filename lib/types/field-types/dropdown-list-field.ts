@@ -1,12 +1,5 @@
-
-import { BaseField } from "./base-field";
-import { TextBasedField } from "./text-fields";
-
-// Dropdown choice interface
-export interface DropdownChoice {
-	label: string;
-	value: string;
-}
+import { TextBasedField } from "./text-based-field";
+import { DropdownChoice } from "./shared-types";
 
 // Dropdown field implementation
 export class DropdownListField extends TextBasedField {
@@ -33,30 +26,5 @@ export class DropdownListField extends TextBasedField {
 			.join('\n');
 		settings.Choices = choicesString;
 		return settings;
-	}
-}
-
-// File attachment fields
-export class FileAttachmentField extends BaseField {
-	type = "FileAttachment";
-
-	generateSettings(): Record<string, string> {
-		return this.getBaseSettings();
-	}
-}
-
-export class ImageAttachmentField extends BaseField {
-	type = "ImageAttachment";
-
-	generateSettings(): Record<string, string> {
-		return this.getBaseSettings();
-	}
-}
-
-export class LinkField extends BaseField {
-	type = "Link";
-
-	generateSettings(): Record<string, string> {
-		return this.getBaseSettings();
 	}
 }

@@ -1,7 +1,7 @@
 import { BaseField } from "./base-field";
-import { NESTED_CONTENT_VIEW, DEFAULT_SORT_FIELD, DEFAULT_SORT_DIRECTION } from "./constants";
+import { NESTED_CONTENT_VIEW, DEFAULT_SORT_FIELD, DEFAULT_SORT_DIRECTION } from "../constants";
 
-export type SortDirection = "asc" | "desc";
+import { SortDirection } from "./shared-types";
 
 export class LinkedContentNestedGrid extends BaseField {
 	type = "Content";

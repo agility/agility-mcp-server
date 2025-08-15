@@ -70,14 +70,6 @@ export const FieldSchema = z.object({
 // Enhanced FieldSchema with better validation and type safety
 export { EnhancedFieldSchema } from "@/lib/types";
 
-// Legacy ModelSchema for backward compatibility
-export const ModelSchema = z.object({
-	id: z.number().describe("The system-generated ID of this model.  Use -1 to indicate a new model."),
-	displayName: z.string().min(2).describe("The display name of the model, used in the UI."),
-	referenceName: z.string().min(2).describe("The reference name of the model, used in code and APIs."),
-	description: z.string().optional().describe("A brief description of the model, used in the UI."),
-	fields: z.array(FieldSchema).min(0).describe("The fields of the model, used to define the structure of the content. Each field has a name, label, type, and optional settings."),
-});
 
 // Enhanced ModelSchema with better field type validation
 export const EnhancedModelSchema = z.object({
@@ -87,6 +79,9 @@ export const EnhancedModelSchema = z.object({
 	description: z.string().optional().describe("A brief description of the model, used in the UI."),
 	fields: z.array(EnhancedFieldSchema).min(0).describe("The fields of the model with enhanced type safety and validation."),
 });
+
+// Export the TypeScript type inferred from the schema
+export type EnhancedModel = z.infer<typeof EnhancedModelSchema>;
 
 // Helper function to create fields using the class-based approach
 export const createField = {
@@ -196,27 +191,6 @@ interface Params {
 	model: Model;
 }
 
-// Enhanced saveModel function that can work with both legacy fields and new Field classes
-export async function saveModel({ token, instanceGuid, model }: Params) {
-	if (!instanceGuid || !token || !model) {
-		throw new Error('instanceGuid, token, and model are required');
-	}
-
-	try {
-		const options = new Options();
-		options.token = token;
-
-		const agilityClient = new ApiClient(options);
-
-		const createdModel = await agilityClient.modelMethods.saveModel(model, instanceGuid as string);
-
-		return createdModel;
-
-	} catch (error) {
-		throw new Error(`Failed to save model: ${error}`);
-	}
-}
-
 // Helper function to convert Field instances to ModelField instances
 export function convertFieldsToModelFields(fields: (Field | any)[]): ModelField[] {
 	return fields.map((field, index) => {
@@ -245,8 +219,8 @@ export function convertFieldsToModelFields(fields: (Field | any)[]): ModelField[
 	});
 }
 
-// Enhanced saveModelWithFields function that accepts Field instances
-export async function saveModelWithFields({
+// Enhanced function that accepts Field instances
+export async function saveModel({
 	token,
 	instanceGuid,
 	id = -1,

@@ -1,6 +1,6 @@
 import { BaseField } from "./base-field";
 
-export type SortDirection = "asc" | "desc";
+import { SortDirection } from "./shared-types";
 
 export class LinkedContentSharedGrid extends BaseField {
 	type = "Content";

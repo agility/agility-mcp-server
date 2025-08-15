@@ -7,7 +7,7 @@ import {
 	DateField,
 	DropdownListField,
 	ContentField,
-	saveModelWithFields,
+	saveModel,
 	type DropdownChoice
 } from "@/lib/handlers/save-model";
 
@@ -56,7 +56,7 @@ export async function createBlogPostModel(token: string, instanceGuid: string) {
 		})
 	];
 
-	return await saveModelWithFields({
+	return await saveModel({
 		token,
 		instanceGuid,
 		displayName: "Blog Post",
@@ -85,7 +85,7 @@ export async function createProductModel(token: string, instanceGuid: string) {
 			.withGridSettings("name", "asc", "name,price,category")
 	];
 
-	return await saveModelWithFields({
+	return await saveModel({
 		token,
 		instanceGuid,
 		displayName: "Product",
@@ -129,7 +129,7 @@ export async function createHeroComponentModel(token: string, instanceGuid: stri
 		})
 	];
 
-	return await saveModelWithFields({
+	return await saveModel({
 		token,
 		instanceGuid,
 		displayName: "Hero Component",
@@ -185,7 +185,7 @@ export async function createNewsArticleModel(token: string, instanceGuid: string
 		createField.integer("readTime", "Estimated Read Time", { description: "In minutes" })
 	];
 
-	return await saveModelWithFields({
+	return await saveModel({
 		token,
 		instanceGuid,
 		displayName: "News Article",

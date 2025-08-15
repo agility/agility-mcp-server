@@ -36,30 +36,3 @@ export abstract class TextBasedField extends BaseField {
 		return settings;
 	}
 }
-
-
-// Text-based field implementations
-
-export class TextField extends TextBasedField {
-	type = "Text";
-
-	generateSettings(): Record<string, string> {
-		return this.getTextSettings();
-	}
-}
-
-export class LongTextField extends TextBasedField {
-	type = "LongText";
-
-	generateSettings(): Record<string, string> {
-		return this.getTextSettings();
-	}
-}
-
-export class HtmlField extends TextBasedField {
-	type = "Html";
-
-	generateSettings(): Record<string, string> {
-		return this.getTextSettings();
-	}
-}

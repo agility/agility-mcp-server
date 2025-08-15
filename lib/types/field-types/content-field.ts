@@ -1,8 +1,5 @@
 import { BaseField } from "./base-field";
-
-// Content field types and enums
-export type ContentRenderAs = "dropdown" | "checkbox" | "searchlistbox" | "grid";
-export type SortDirection = "asc" | "desc";
+import { ContentRenderAs, SortDirection } from "./shared-types";
 
 /**
  * @deprecated This generic ContentField class has been split into specific classes for better type safety:

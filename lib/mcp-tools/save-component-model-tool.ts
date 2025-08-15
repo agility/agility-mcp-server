@@ -1,11 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from "zod";
-import { ModelField } from '@agility/management-sdk';
+
 import {
-	ModelSchema,
 	EnhancedModelSchema,
 	saveModel,
-	saveModelWithFields,
 	createFieldFromSchema
 } from "@/lib/handlers/save-model";
 
@@ -24,7 +22,7 @@ export function registerSaveComponentModelTool(server: McpServer) {
 			// Convert enhanced field schema to Field instances
 			const fieldInstances = model.fields.map((fieldData: any) => createFieldFromSchema(fieldData));
 
-			const updatedModel = await saveModelWithFields({
+			const updatedModel = await saveModel({
 				token,
 				instanceGuid,
 				id: model.id,

@@ -9,6 +9,7 @@ import {
 	registerSaveComponentModelTool
 } from "@/lib/mcp-tools";
 import { verifyToken } from "@/lib/mcp-auth";
+import { registerContainerListingTool } from "@/lib/mcp-tools/list-containers-tool";
 
 // Create the MCP handler with all registered tools
 const handler = createMcpHandler(
@@ -17,6 +18,7 @@ const handler = createMcpHandler(
 		registerAvailableInstancesTool(server);
 		registerContentModelsTool(server);
 		registerComponentModelsTool(server);
+		registerContainerListingTool(server);
 		registerSaveContentModelTool(server);
 		registerSaveComponentModelTool(server);
 	},
